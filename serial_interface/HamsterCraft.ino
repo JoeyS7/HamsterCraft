@@ -1,5 +1,4 @@
-#include <TimerThree.h>
-#include <TimerOne.h>
+ #include <TimerThree.h>
 
 //led and sonar pins
 const int led = 11;
@@ -18,6 +17,9 @@ const int left_dirb = 14;
 const int right_pwm = 15;
 const int right_dira = 16;
 const int right_dirb = 17;
+
+//servo pin
+const int servo = 10;
 
 //global variables for sonar
 /*
@@ -42,6 +44,7 @@ volatile unsigned long ten_micro3 = 0;
 //global motor variables
 char motor_state = 0;
 unsigned long last_motor_write = 0;
+char sonars_since_last_motor_write = 0;
 
 void both_forward(){
   digitalWrite(left_dira, HIGH);
@@ -89,6 +92,8 @@ void setup() {
   pinMode(right_dirb, OUTPUT);
   pinMode(right_pwm, OUTPUT);
   
+  pinMode(servo, OUTPUT);
+  
   Serial.print("BEGIN PROGRAM\n");
   
 }
@@ -103,14 +108,14 @@ void loop() {
   while(sonar_status != 2){ 
     i++;
     if(i > 5000){ //about 1.5 m
-      Timer1.stop();
+      Timer3.stop();
       sonar_status = 2; //manually change the status to "ECHO COMPLETE"
       timeout_status = 1; 
 
     }
   }    
 
-  Timer1.stop();
+  Timer3.stop();
   
   //output result
   
@@ -128,42 +133,63 @@ void loop() {
     Serial.print("\n");
     curr_sonar = 1;
     timeout_status = 0;
-    
-    byte response[4] = {255, 0, 0, '\n'};
-    Serial.setTimeout(250); //half a second timeout
-    Serial.readBytesUntil('\n', response, 4);
-    //read response. If dir = 0, 1, 2, or 3, write to motors    
-    digitalWrite(m_enable, HIGH);
+  }
+  
+  byte response[4] = {255, 0, 0, '\n'};
+  Serial.setTimeout(100); //very short timeout
+  byte response_received = Serial.readBytesUntil('\n', response, 4);
+  //read response. If dir = 0, 1, 2, or 3, write to motors    
+  digitalWrite(m_enable, HIGH);
+  if(response_received != 0){
+    //execute response - write to motors
+    sonars_since_last_motor_write = 0;
     if(response[0] == 0){
       both_forward();
       analogWrite(left_pwm, response[1]);
       analogWrite(right_pwm, response[2]);
       digitalWrite(led, HIGH);
-    }else if(response[0] == 1){
+    }if(response[0] == 1){
       left_forward_right_backward();
       analogWrite(left_pwm, response[1]);
       analogWrite(right_pwm, response[2]);
       digitalWrite(led, HIGH);
-    }else if(response[0] == 2){
+    }
+    if(response[0] == 2){
       left_backward_right_forward();
       analogWrite(left_pwm, response[1]);
       analogWrite(right_pwm, response[2]);
-      digitalWrite(led, HIGH);
-    }else if(response[0] == 3){
+    }
+    if(response[0] == 3){
       both_backward();
       analogWrite(left_pwm, response[1]);
       analogWrite(right_pwm, response[2]);
       digitalWrite(led, HIGH);
-    }else{
-      //error handling or no response received
-      both_forward();
-      analogWrite(left_pwm, 0);
-      analogWrite(right_pwm, 0);
-      digitalWrite(led, LOW);
     }
     
+    if(response[0] == 4){
+      digitalWrite(servo, HIGH);
+      analogWrite(left_pwm, 0);
+      analogWrite(right_pwm, 0);
+    }
+    
+    if(response[0] == 5){
+      digitalWrite(servo, LOW);
+      analogWrite(left_pwm, 0);
+      analogWrite(right_pwm, 0);
+    }
+      
+  }else{
+      //error handling or no response received
+      sonars_since_last_motor_write++;
+      if(sonars_since_last_motor_write > 6){
+        //no response received in a while - execute timeout
+        both_forward();
+        analogWrite(left_pwm, 0);
+        analogWrite(right_pwm, 0);
+        digitalWrite(led, LOW);
+      }
+    
   }
-  
   delay(20);
   
 }
@@ -207,13 +233,13 @@ void echoChange(){
       //start of echo; begin timing
       curr_ten_micro = 0;
       //myTimer.begin(countTenMicro, 10); //fire every ten us
-      Timer1.initialize(10); //fire every ten us
-      Timer1.attachInterrupt(countTenMicro);
-      Timer1.start();
+      Timer3.initialize(10); //fire every ten us
+      Timer3.attachInterrupt(countTenMicro);
+      Timer3.start();
       sonar_status = 1; //set "IN ECHO" status
     }else{
       //end of echo; stop timer
-      Timer1.stop();
+      Timer3.stop();
       sonar_status = 2; //set "ECHO COMPLETE" status
     }
   }
