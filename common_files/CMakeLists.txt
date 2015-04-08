@@ -39,14 +39,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files (DIRECTORY msg
   FILES
   Motor.msg 
-  WriteI2C.msg
-  WriteI2CRegister.msg
-  RawIRData.msg
-  RawMotorPowerData.msg
-  ElectronicPowerData.msg
-  keys.msg
-  Avg_Noise.msg
-  Filtered.msg
   Sonar.msg
 )
 
@@ -54,6 +46,7 @@ add_service_files (DIRECTORY srv
 	FILES
 	ReadI2C.srv
 	ReadI2CRegister.srv
+	ReadLidar.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

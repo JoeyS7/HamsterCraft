@@ -1,14 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(serial_interface)
+project(new_lidar)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  common_files
-  std_msgs
   roscpp
   rospy
+  tf
+  urg_node
+  pcl_ros
+  pcl_conversions
+  laser_geometry
 )
 
 ## System dependencies are found with CMake's conventions
@@ -18,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-#catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -82,9 +85,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-	LIBRARIES serial_interface
-	CATKIN_DEPENDS common_files roscpp rospy
-	DEPENDS system_lib
+#  LIBRARIES new_lidar
+#  CATKIN_DEPENDS roscpp rospy tf urg_node
+#  DEPENDS system_lib
 )
 
 ###########
@@ -94,26 +97,39 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-#include_directories(
-#  ${catkin_INCLUDE_DIRS}
-#)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
-# add_library(serial_interface
-#   src/${PROJECT_NAME}/serial_interface.cpp
+# add_library(new_lidar
+#   src/${PROJECT_NAME}/new_lidar.cpp
 # )
 
 ## Declare a cpp executable
-# add_executable(serial_interface_node src/serial_interface_node.cpp)
+add_executable(pcl_conversion_node src/pcl_conversion_node.cpp)
+		
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(serial_interface_node serial_interface_generate_messages_cpp)
+# add_dependencies(new_lidar_node new_lidar_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(serial_interface_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(pcl_conversion_node
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(pcl_centroid_node src/pcl_centroid_node.cpp)
+
+target_link_libraries(pcl_centroid_node
+   ${catkin_LIBRARIES}
+)
+
+add_executable(test_lidar_node src/test_lidar_node.cpp)
+target_link_libraries(test_lidar_node
+   ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -124,13 +140,13 @@ catkin_package(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-install(PROGRAMS
-  scripts/serial_node
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS serial_interface serial_interface_node
+# install(TARGETS new_lidar new_lidar_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -155,7 +171,7 @@ install(PROGRAMS
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_serial_interface.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_new_lidar.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
