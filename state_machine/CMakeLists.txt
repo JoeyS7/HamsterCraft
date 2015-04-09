@@ -6,6 +6,7 @@ project(state_machine)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   common_files
+  std_msgs
   roscpp
   rospy
 )
@@ -81,9 +82,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES state_machine
-#  CATKIN_DEPENDS common_files roscpp rospy
-#  DEPENDS system_lib
+  LIBRARIES state_machine
+  CATKIN_DEPENDS common_files roscpp rospy
+  DEPENDS system_lib
 )
 
 ###########
@@ -93,9 +94,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+#include_directories(
+#  ${catkin_INCLUDE_DIRS}
+#)
 
 ## Declare a cpp library
 # add_library(state_machine
@@ -123,10 +124,10 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+ install(PROGRAMS
+   scripts/state_machine_node
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS state_machine state_machine_node
