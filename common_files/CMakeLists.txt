@@ -44,8 +44,6 @@ add_message_files (DIRECTORY msg
 
 add_service_files (DIRECTORY srv 
 	FILES
-	ReadI2C.srv
-	ReadI2CRegister.srv
 	ReadLidar.srv
 )
 
