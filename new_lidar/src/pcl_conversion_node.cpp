@@ -23,11 +23,11 @@ sensor_msgs::LaserScan last_laser;
 ros::Time zero_time(0);
 ros::Time laser_time(0);
 sensor_msgs::LaserScan snapshot;
+sensor_msgs::LaserScan last_snapshot;
 ros::Time snapshot_time(0);
 
-
-
 sensor_msgs::LaserScan subtractLaser(sensor_msgs::LaserScan laser){
+	ROS_INFO("Subtract laser using %f", snapshot_time.toSec());
         for(int i = 0; i < laser.ranges.size(); i++){
 		//filter data outside of square arena
 //		double y = laser.ranges[i]*cos(i*0.36);
@@ -35,14 +35,17 @@ sensor_msgs::LaserScan subtractLaser(sensor_msgs::LaserScan laser){
 //		if(x < -2.0 || x > 2.0 || y < 0.0 || y > 2.0){
 //			laser.ranges[i] = 10;
 //		}else
-		if(abs(snapshot.ranges[i] - laser.ranges[i]) < 0.2){
+		
+		if(fabs(snapshot.ranges[i] - laser.ranges[i]) < 0.15){
                 	laser.ranges[i] = 10.0; //set it above max range
                         //laser projection will ignore this value
-                }else if(snapshot.ranges[i] > 2.0){
+                }else if(laser.ranges[i] > 3.0){
 			//ignore far away values
+			ROS_INFO("Ignoring FAR AWAY r=%f, theta=%f", laser.ranges[i], i*0.36);
 			laser.ranges[i] = 10.0;
 		}else{
 			//do nothing, allow conversion
+			ROS_INFO("Found theta=%f, r=%f, difference=%f", i*0.36, laser.ranges[i], fabs(snapshot.ranges[i] - laser.ranges[i]));	
 		}
 
 		
@@ -72,12 +75,8 @@ void scanCallBack(const sensor_msgs::LaserScan::ConstPtr& laser){
 void commandCallBack(const std_msgs::Int8::ConstPtr& command){
 	if(command->data == 0){
 		//use the last_laser as the snapshot for this command
-		for(int i = 0; i < last_laser.ranges.size(); i++){
-			if(last_laser.ranges[i] > 2.0){
-			//ignore far away values
-				last_laser.ranges[i] = 10;
-			}
-		}
+		ROS_INFO("Taking snapshot");
+		last_snapshot = snapshot;
 		snapshot = last_laser;
 		snapshot_time = ros::Time::now();	
 	}else{
@@ -98,9 +97,7 @@ int main(int argc, char**argv){
 	command = nh.subscribe("/command", 1, commandCallBack);	
 		
 
-	while(ros::ok()){
-		ros::spinOnce();
-	}
+	ros::spin();
 	return 0;
 }		
 		

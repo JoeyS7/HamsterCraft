@@ -40,12 +40,12 @@ add_message_files (DIRECTORY msg
   FILES
   Motor.msg 
   Sonar.msg
+  ReadLidar.msg
 )
 
-add_service_files (DIRECTORY srv 
-	FILES
-	ReadLidar.srv
-)
+#add_service_files (DIRECTORY srv 
+#	FILES
+#)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
