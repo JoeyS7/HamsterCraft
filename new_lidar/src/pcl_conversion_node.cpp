@@ -27,7 +27,7 @@ sensor_msgs::LaserScan last_snapshot;
 ros::Time snapshot_time(0);
 
 sensor_msgs::LaserScan subtractLaser(sensor_msgs::LaserScan laser){
-	ROS_INFO("Subtract laser using %f", snapshot_time.toSec());
+//	ROS_INFO("Subtract laser using %f", snapshot_time.toSec());
         for(int i = 0; i < laser.ranges.size(); i++){
 		//filter data outside of square arena
 //		double y = laser.ranges[i]*cos(i*0.36);
@@ -41,11 +41,11 @@ sensor_msgs::LaserScan subtractLaser(sensor_msgs::LaserScan laser){
                         //laser projection will ignore this value
                 }else if(laser.ranges[i] > 3.0){
 			//ignore far away values
-			ROS_INFO("Ignoring FAR AWAY r=%f, theta=%f", laser.ranges[i], i*0.36);
+		//	ROS_INFO("Ignoring FAR AWAY r=%f, theta=%f", laser.ranges[i], i*0.36);
 			laser.ranges[i] = 10.0;
 		}else{
 			//do nothing, allow conversion
-			ROS_INFO("Found theta=%f, r=%f, difference=%f", i*0.36, laser.ranges[i], fabs(snapshot.ranges[i] - laser.ranges[i]));	
+		//	ROS_INFO("Found theta=%f, r=%f, difference=%f", i*0.36, laser.ranges[i], fabs(snapshot.ranges[i] - laser.ranges[i]));	
 		}
 
 		
@@ -81,6 +81,7 @@ void commandCallBack(const std_msgs::Int8::ConstPtr& command){
 		snapshot_time = ros::Time::now();	
 	}else{
 		//ignore the snapshot
+		ROS_INFO("Removing snapshot");
 		snapshot_time = zero_time;
 	}
 }
