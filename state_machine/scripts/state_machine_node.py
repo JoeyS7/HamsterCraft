@@ -22,9 +22,9 @@ x_max = 2.0
 y_max = 2.0
 
 #sonar constraints
-front_min = 30
+front_min = 25
 front_clear = 60
-side_min = 15
+side_min = 25 
 
 #state machine flags
 already_ramped = False
@@ -105,8 +105,8 @@ def ramp_up():
 	#ramp up motor speed in five steps
 	for i in range(1,6):
 		motor_count = 0
-		next_motor_msg.left = (i*.2)*.32	
-		next_motor_msg.right = (i*.2)*.32
+		next_motor_msg.left = (i*.2)*.35	
+		next_motor_msg.right = (i*.2)*.35 + .05 
 		local_count = 0
 		while local_count < 1000000 and motor_count < 1:
 			local_count += 1
@@ -118,13 +118,13 @@ def ramp_up():
 
 def move_forward():
 	global next_motor_msg
-	next_motor_msg.left = .32
-	next_motor_msg.right = .32
+	next_motor_msg.left = .35
+	next_motor_msg.right = .35 + .05
 
 def move_forward_slowly():
 	global next_motor_msg
 	next_motor_msg.left = .26
-	next_motor_msg.right = .26
+	next_motor_msg.right = .26 + 0.1
 
 def stop():
 	global next_motor_msg
@@ -143,6 +143,7 @@ def stop():
 def state_machine_node():
 	rospy.init_node('state_machine_node', anonymous=True)
 	rospy.Timer(rospy.Duration(.1), motor_callback)
+	sonar_sub = rospy.Subscriber('sonar', Sonar, sonar_callback)
 	global next_motor_msg
 	next_motor_msg.left = 0.0
 	next_motor_msg.right = 0.0
@@ -156,10 +157,10 @@ def state_machine_node():
 		global side_min
 		global slow_down
 		global last_sonar
+		global motor_count
 		if state == start():
 			print "Starting program"
 		elif state == move_north():
-			print "Moving forward"
 			if(already_ramped == False and slow_down == False):
 				ramp_up()
 				already_ramped = True
@@ -202,34 +203,58 @@ def state_machine_node():
 			already_ramped = False
 		elif(state == move_north()):
 			#while moving north torward destination, analyze sensors
-			print "Determine next state from move_north"	
-			print "Sonars: %d, %d, %d" %(last_sonar.sonar1, last_sonar.sonar2, last_sonar.sonar3)	
-			if(last_sonar.sonar1 > side_min and last_sonar.sonar2 > side_min and last_sonar.sonar3 > front_clear):
+			if(last_sonar.sonar1 > side_min and last_sonar.sonar2 > side_min):
+				# and last_sonar.sonar3 > front_clear):
 				#nothing detected, proceed forward
 				state = move_north()
 				already_ramped = True
 				slow_down = False
-			elif(last_sonar.sonar1 > side_min and last_sonar.sonar2 > side_min and last_sonar.sonar3 > front_min and last_sonar.sonar3 <= front_clear):
+#			elif(last_sonar.sonar1 > side_min and last_sonar.sonar2 > side_min) and last_sonar.sonar3 > front_min and last_sonar.sonar3 <= front_clear):
 				#object detected in front distance, slow down
 				#no objects on sides
-				state = move_north()
-				slow_down = True
-				already_ramped = True
+#				state = move_north()
+#				slow_down = True
+#				already_ramped = True
+#				print "Proceeding forward slowly"
 			elif(last_sonar.sonar1 < side_min and last_sonar.sonar2 > side_min):
 				#object detected on left, right is clear
 				turn_right() #turn right 90
 				state = follow_right() #begin following obstacle
+				motor_count = 0 #so we can set minimum follows
 				already_ramped = False
 			elif(last_sonar.sonar1 > side_min and last_sonar.sonar2 < side_min):
 				#object detected on right, left is clear
 				turn_left() #turn left 90
 				state = follow_left()
+				motor_count = 0 
 				already_ramped = False
 			else:
 				#by default turn left
 				turn_left()
 				state = follow_left()
+				motor_count = 0
 				already_ramped = False
+				print "Else?"
+		elif state == follow_left():
+			#stay in state until obstacle on right fades
+			if(last_sonar.sonar3 > front_min and motor_count < 3):
+				state = follow_left()
+				already_ramped = True
+				print "Following right obstacle due to minimum"
+			elif(last_sonar.sonar3 > front_min and last_sonar.sonar2 <= 20):
+				state = follow_left()
+				already_ramped = True
+				print "Following right obstacle due to obstacle existance"
+			elif(last_sonar.sonar2 > 20):
+				#no more obstacle on right, so turn right
+				turn_right()
+				state = move_north()
+				already_ramped = False
+				print "Lost right obstacle, turning north"
+			else:
+				stop()
+				state = stop_state()
+	
 		else:
 			state = stop_state()
 

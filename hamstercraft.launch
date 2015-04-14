@@ -1,0 +1,4 @@
+<launch>
+        <node pkg="serial_interface" type="serial_node.py" name="serial_node">
+        </node>
+</launch>
